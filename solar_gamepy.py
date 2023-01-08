@@ -30,7 +30,7 @@ daysec      = 24.0*60*60
 e_ap_v      = 29290                     # earth velocity at aphelion
 m_ap_v      = 21970                     # mars velocity at aphelion
 commet_v    = 2000
-moon_v		= e_ap_v
+moon_v		= e_ap_v+1020.0
 
 centro_massa = np.array([0.0,0.0,0.0])
 maxM = 0.0
@@ -134,7 +134,7 @@ def main():
 	global centro_massa, maxM, minM, planets, pe
 
 	pe = planet(pos=np.array([1.0167*AU, 0.0, 0.0]), vel=np.array([0.0, e_ap_v, 0.0]), M=Me, color=GREEN)
-	pmoon = planet(pos=np.array([1.0167*AU-3.844e8, 0.0, 0.0]), vel=np.array([0.0, e_ap_v+1020.0, 0.0]), M=Mmoon, color=WHITE)
+	pmoon = planet(pos=np.array([1.0167*AU-3.844e8, 0.0, 0.0]), vel=np.array([0.0, moon_v, 0.0]), M=Mmoon, color=WHITE)
 	pm = planet(pos=np.array([1.666*AU, 0.0, 0.0]), vel=np.array([0.0, m_ap_v, 0.0]), M=Mm, color=RED)
 	pc = planet(pos=np.array([6*AU, 0.3*AU, 0.0]), vel=np.array([0.0, commet_v, 0.0]), M=Mc, color=WHITE)
 	ps = planet(pos=np.array([0.0, 0.0, 0.0]), vel=np.array([0.0, 0.0, 0.0]), M=Ms, color=YELLOW)
