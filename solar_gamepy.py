@@ -61,7 +61,7 @@ class planet:
 	@M.setter
 	def M(self, val):
 		self._M = val
-		self.r = math.pow((3 * val) / (4 * math.pi), 1/3)
+		self.r = math.pow((3 * val) / (4 * math.pi), 1/3) # I still don't consider the density of the planet
 
 
 GRAY = (127, 127, 127) 
@@ -219,7 +219,7 @@ def main():
 			for p2 in planets:
 				if p1 != p2:
 					d = sum(np.abs(distance(p1, p2)))
-					if d < (p1.r+p2.r): # collisione quando la distanza è minore della somma dei due raggi
+					if d < (p1.r+p2.r): # collision
 						if p1.M > p2.M:
 							if j not in toberemoved:
 								p1.M += p2.M
@@ -262,7 +262,7 @@ def main():
 				miny = pl.pos[Y]
 			mean += np.abs(pl.pos)
 
-		mean /= len(planets) # utilizzata per tenere la vista centrata	
+		mean /= len(planets) # to be used for view auto-centering	
 		centro_massa = num/den
 
 		if t > days(28) and t < days(80):
