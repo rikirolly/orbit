@@ -110,7 +110,7 @@ def w2p(x, y):
 white = 255, 240, 200
 black = 20, 20, 40
 
-def giorni(g):
+def days(g):
 	return 24.0*60*60*g
 
 
@@ -180,7 +180,7 @@ def main():
 
 	t = 0.0
 	# dt = 1*daysec # every frame move this time
-	dt = giorni(0.1)
+	dt = days(0.1)
 
 	clock = pg.time.Clock()
 	# initialize and prepare screen
@@ -265,13 +265,13 @@ def main():
 		mean /= len(planets) # utilizzata per tenere la vista centrata	
 		centro_massa = num/den
 
-		if t > giorni(28) and t < giorni(80):
+		if t > days(28) and t < days(80):
 			worldSize.x *= 1.01
 			worldSize.y *= 1.01
 		
-		if t > giorni(28):
+		if t > days(28):
 			clock_tick = 60
-		if t > giorni(100):
+		if t > days(100):
 			clock_tick = 300
 
 		# if mean[X] > worldSize.x:
