@@ -10,17 +10,17 @@ import numpy as np
 import torch
 
 dtype = torch.float
-device = torch.device("mps")
+device = torch.device("cuda")
 
 G = 6.67e-11
 
 Mb = 4.0e30                    # black hole
-Ms = 2.0e31                    # sun
+Ms = 1.9891e30                    # sun
 Me = 5.972e24                  # earth        
 Mm = 6.39e23                   # mars
 Mc = 6.39e16                  	# unknown comet
 Mmoon = 7.348e22					# moon
-AU = 1.5e11
+AU = 149597828677
 daysec = 24.0*60*60
 
 e_ap_v = 29290                     # earth velocity at aphelion
@@ -58,7 +58,8 @@ class planet:
     def M(self, val):
         if val != 0:
             self._M = val
-            self.r = math.pow((3 * val) / (4 * math.pi), 1/3) # I still don't consider the density of the planet
+            densita = 1408 # sole kg/m^2
+            self.r = math.pow((3 * val) / (4 * math.pi * densita), 1/3) # I still don't consider the density of the planet
         else:
             self._M = 0
             self.r = 0
@@ -164,10 +165,10 @@ def main():
     ps = planet(pos=np.array([0.0, 0.0, 0.0]), vel=np.array([0.0, 0.0, 0.0]), M=Ms, color=YELLOW)
     ps2 = copy.deepcopy(ps)
     ps2.pos[Y] = 1.0167*AU*2
-    ps2.vel[X] = commet_v*20
+    ps2.vel[X] = commet_v*40
     ps3 = copy.deepcopy(ps)
     ps3.pos[Y] = -1.0167*AU*2
-    ps3.vel[X] = -commet_v*20
+    ps3.vel[X] = -commet_v*40
     ps4 = copy.deepcopy(ps)
     ps4.pos[X] = -1.0167*AU*2
     ps4.vel[Y] = -commet_v*20
@@ -182,6 +183,7 @@ def main():
     pe3.vel[X] = commet_v*7
 
     # planets = [ps, pmoon, pe, pm, pc]
+    ps.M *= 10
     planets = [ps, ps2, ps3, ps4, ps5]
 
     for i in range(1000):
@@ -218,7 +220,7 @@ def main():
 
     t = 0.0
     # dt = 1*daysec # every frame move this time
-    dt = days(0.1)
+    dt = days(0.02)
 
     clock = pg.time.Clock()
     # initialize and prepare screen
@@ -229,7 +231,8 @@ def main():
 
     # main game loop
     done = 0
-    clock_tick = 300
+    clock_tick = 1500
+    first = False
     while not done:
 
         posizioni, velocita, distanze, centro_massa, posizioni_min, posizioni_max, masse_max, masse_min, raggi, distanze_min, raggi_max = aggiorna_posizioni(posizioni, masse, velocita, G, dt)
@@ -251,7 +254,7 @@ def main():
             pl.pos[X] = v_posizioni[i][X]
             pl.pos[Y] = v_posizioni[i][Y]
             pl.queue.append(copy.copy(pl.pos))
-            if len(pl.queue) > 500:
+            if len(pl.queue) > 1000:
                 pl.queue.pop(0)
             i += 1
             
@@ -298,21 +301,29 @@ def main():
         # if mean[Y] > worldSize.y:
         # 	worldSize.y = mean[Y]
 
-        if 2*maxx > worldSize.x:
-        	worldSize.x = 2*maxx
-        if 2*minx < -worldSize.x and minx < 0.0:
-        	worldSize.x = -2*minx
-        if 2*maxy > worldSize.y:
-        	worldSize.y = 2*maxy
-        if 2*miny < -worldSize.y and miny < 0.0:
-        	worldSize.y = -2*miny	
+        if not first:
+            if 2*maxx > worldSize.x:
+                worldSize.x = worldSize.y = 2*maxx
+            if 2*minx < -worldSize.x and minx < 0.0:
+                worldSize.x = worldSize.y = -2*minx
+            if 2*maxy > worldSize.y:
+                worldSize.x = worldSize.y = 2*maxy
+            if 2*miny < -worldSize.y and miny < 0.0:
+                worldSize.x = worldSize.y = -2*miny	
+            first = True
 
         t += dt
 
         screen.fill(black)
 
+        i = 0
         for pl in planets:
             draw_planet(screen, pl)
+            # if velocita[i][X].item() < commet_v*30 and velocita[i][Y].item() < commet_v*30:
+            #     draw_planet(screen, pl)
+            # else:
+            #     print('skip')
+            i += 1
         
         img = font.render(f't={t/(24*60*60)} days', True, WHITE)
         screen.blit(img, (20, 20))
