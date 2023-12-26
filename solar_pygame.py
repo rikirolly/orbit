@@ -159,24 +159,25 @@ def main():
 
     planets = np.array([ps, pmoon, pe, pm, pc])
 
-    # for i in range(20):
-    # 	speed = commet_v*20
-    # 	p = copy.deepcopy(ps)
-    # 	p.pos[X] = random.uniform(-1.0167*AU*8, 1.0167*AU*8)
-    # 	p.pos[Y] = random.uniform(-1.0167*AU*8, 1.0167*AU*8)
-    # 	p.vel[X] = random.uniform(-speed, speed)
-    # 	p.vel[Y] = random.uniform(-speed, speed)
-    # 	p.M = random.uniform(Me/10, Me)
-    # 	planets = np.append(planets, p)
+    for i in range(100):
+        speed = commet_v*20
+        p = copy.deepcopy(ps)
+        p.pos[X] = random.uniform(-1.0167*AU*8, 1.0167*AU*8)
+        p.pos[Y] = random.uniform(-1.0167*AU*8, 1.0167*AU*8)
+        p.vel[X] = random.uniform(-speed, speed)
+        p.vel[Y] = random.uniform(-speed, speed)
+        p.M = random.uniform(Me/10, Me)
+        p.color=GREEN
+        planets = np.append(planets, p)
 
-    # for i in range(10):
-    # 	p = copy.deepcopy(ps)
-    # 	p.pos[X] = random.uniform(-1.0167*AU*8, 1.0167*AU*8)
-    # 	p.pos[Y] = random.uniform(-1.0167*AU*8, 1.0167*AU*8)
-    # 	p.vel[X] = random.uniform(-commet_v*10, commet_v*10)
-    # 	p.vel[Y] = random.uniform(-commet_v*10, commet_v*10)
-    # 	p.M = random.uniform(Ms/50, Ms/5)
-    # 	planets = np.append(planets, p)
+    for i in range(100):
+        p = copy.deepcopy(ps)
+        p.pos[X] = random.uniform(-1.0167*AU*8, 1.0167*AU*8)
+        p.pos[Y] = random.uniform(-1.0167*AU*8, 1.0167*AU*8)
+        p.vel[X] = random.uniform(-commet_v*10, commet_v*10)
+        p.vel[Y] = random.uniform(-commet_v*10, commet_v*10)
+        p.M = random.uniform(Ms/50, Ms/5)
+        planets = np.append(planets, p)
 
     t = 0.0
     # dt = 1*daysec # every frame move this time
@@ -191,7 +192,7 @@ def main():
 
     # main game loop
     done = 0
-    clock_tick = 20
+    clock_tick = 300
     while not done:
         # compute G forces
         for p1 in planets:
@@ -265,28 +266,28 @@ def main():
         mean /= len(planets) # to be used for view auto-centering	
         centro_massa = num/den
 
-        if t > days(28) and t < days(80):
-            worldSize.x *= 1.01
-            worldSize.y *= 1.01
+        # if t > days(28) and t < days(80):
+        #     worldSize.x *= 1.01
+        #     worldSize.y *= 1.01
         
-        if t > days(28):
-            clock_tick = 60
-        if t > days(100):
-            clock_tick = 300
+        # if t > days(28):
+        #     clock_tick = 60
+        # if t > days(100):
+        #     clock_tick = 300
 
         # if mean[X] > worldSize.x:
         # 	worldSize.x = mean[X]
         # if mean[Y] > worldSize.y:
         # 	worldSize.y = mean[Y]
 
-        # if maxx > worldSize.x:
-        # 	worldSize.x = maxx
-        # if minx < -worldSize.x and minx < 0.0:
-        # 	worldSize.x = -minx
-        # if maxy > worldSize.y:
-        # 	worldSize.y = maxy
-        # if miny < -worldSize.y and miny < 0.0:
-        # 	worldSize.y = -miny	
+        if 2*maxx > worldSize.x:
+            worldSize.x = 2*maxx
+        if 2*minx < -worldSize.x and minx < 0.0:
+            worldSize.x = -2*minx
+        if 2*maxy > worldSize.y:
+            worldSize.y = 2*maxy
+        if 2*miny < -worldSize.y and miny < 0.0:
+            worldSize.y = -2*miny	
 
         t += dt
 

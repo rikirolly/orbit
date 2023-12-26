@@ -15,7 +15,7 @@ device = torch.device("mps")
 G = 6.67e-11
 
 Mb = 4.0e30                    # black hole
-Ms = 2.0e30                    # sun
+Ms = 2.0e31                    # sun
 Me = 5.972e24                  # earth        
 Mm = 6.39e23                   # mars
 Mc = 6.39e16                  	# unknown comet
@@ -100,32 +100,35 @@ def aggiorna_posizioni(posizioni: torch.Tensor, masse: torch.Tensor, velocita: t
     masse_min = torch.min(masse, dim=0)
 
     raggi = torch.pow((masse * 3) / (4 * math.pi), 1/3)
-    distanze_min = torch.min(distanze.fill_diagonal_(float('inf')))
+    filtro_masse = torch.where(masse == 0, torch.tensor(float('inf')).to(device), torch.tensor(1.0).to(device))
+    distanze_filtrate = distanze * filtro_masse
+    distanze_min = torch.min(distanze_filtrate.fill_diagonal_(float('inf')))
     raggi_max = torch.max(raggi, dim=0)
-
-
+    
     return posizioni, velocita, distanze, centro_massa, posizioni_min, posizioni_max, masse_max, masse_min, raggi, distanze_min, raggi_max
 
 
 # worldSize = coordinates(1*AU, 1*AU)
 worldSize = coordinates(10*4.065e8, 10*4.065e8)
 screenSize = coordinates(800, 800)
+zoom = 1.0
 
 # constants
 WINSIZE = [screenSize.x, screenSize.y]
 
 def w2p(x, y):
-    global v_centro_massa
+    global v_centro_massa, zoom
     correction = 1
 
     centerx = v_centro_massa[X]
     centery = v_centro_massa[Y]
     # centerx = pe.pos[X]
     # centery = pe.pos[Y]
+    zws = coordinates(worldSize.x*zoom, worldSize.y*zoom)
 
     """ Convert world coordinates to screen (pixel) coordinates"""
-    return (int(0.5+(x+worldSize.x/2-centerx*correction) / worldSize.x * screenSize.x),
-            int(0.5+screenSize.y - (y+worldSize.y/2-centery*correction) / worldSize.y * screenSize.y))
+    return (int(0.5+(x+zws.x/2-centerx*correction) / zws.x * screenSize.x),
+            int(0.5+screenSize.y - (y+zws.y/2-centery*correction) / zws.y * screenSize.y))
 
 white = 255, 240, 200
 black = 20, 20, 40
@@ -152,7 +155,7 @@ def draw_planet(surface: pg.surface.Surface, p: planet):
 
 
 def main():
-    global v_centro_massa, maxM, minM, planets, pe
+    global v_centro_massa, maxM, minM, planets, pe, zoom
 
     pe = planet(pos=np.array([1.0167*AU, 0.0, 0.0]), vel=np.array([0.0, e_ap_v, 0.0]), M=Me, color=GREEN)
     pmoon = planet(pos=np.array([1.0167*AU-3.844e8, 0.0, 0.0]), vel=np.array([0.0, moon_v, 0.0]), M=Mmoon, color=WHITE)
@@ -160,17 +163,17 @@ def main():
     pc = planet(pos=np.array([6*AU, 0.3*AU, 0.0]), vel=np.array([0.0, commet_v, 0.0]), M=Mc, color=WHITE)
     ps = planet(pos=np.array([0.0, 0.0, 0.0]), vel=np.array([0.0, 0.0, 0.0]), M=Ms, color=YELLOW)
     ps2 = copy.deepcopy(ps)
-    ps2.pos[Y] = 1.0167*AU*7
-    ps2.vel[X] = commet_v*6
+    ps2.pos[Y] = 1.0167*AU*2
+    ps2.vel[X] = commet_v*20
     ps3 = copy.deepcopy(ps)
-    ps3.pos[Y] = -1.0167*AU*4
-    ps3.vel[X] = -commet_v*10
+    ps3.pos[Y] = -1.0167*AU*2
+    ps3.vel[X] = -commet_v*20
     ps4 = copy.deepcopy(ps)
-    ps4.pos[X] = -1.0167*AU*4
-    ps4.vel[Y] = -commet_v*5
+    ps4.pos[X] = -1.0167*AU*2
+    ps4.vel[Y] = -commet_v*20
     ps5 = copy.deepcopy(ps)
-    ps5.pos[X] = 1.0167*AU*4
-    ps5.vel[Y] = commet_v*2
+    ps5.pos[X] = 1.0167*AU*2
+    ps5.vel[Y] = commet_v*20
     pe2 = copy.deepcopy(pe)
     pe2.pos[Y] = -1.0167*AU
     pe2.vel[X] = -commet_v
@@ -178,27 +181,28 @@ def main():
     pe3.pos[Y] = 1.0167*AU
     pe3.vel[X] = commet_v*7
 
-    planets = [ps, pmoon, pe, pm, pc]
+    # planets = [ps, pmoon, pe, pm, pc]
+    planets = [ps, ps2, ps3, ps4, ps5]
 
-    for i in range(100):
+    for i in range(1000):
         speed = commet_v*20
         p = copy.deepcopy(ps)
-        p.pos[X] = random.uniform(-1.0167*AU*8, 1.0167*AU*8)
-        p.pos[Y] = random.uniform(-1.0167*AU*8, 1.0167*AU*8)
+        p.pos[X] = random.uniform(-1.0167*AU*2, 1.0167*AU*2)
+        p.pos[Y] = random.uniform(-1.0167*AU*2, 1.0167*AU*2)
         p.vel[X] = random.uniform(-speed, speed)
         p.vel[Y] = random.uniform(-speed, speed)
         p.M = random.uniform(Me/10, Me)
         p.color=GREEN
         planets = np.append(planets, p)
 
-    for i in range(100):
-        p = copy.deepcopy(ps)
-        p.pos[X] = random.uniform(-1.0167*AU*8, 1.0167*AU*8)
-        p.pos[Y] = random.uniform(-1.0167*AU*8, 1.0167*AU*8)
-        p.vel[X] = random.uniform(-commet_v*10, commet_v*10)
-        p.vel[Y] = random.uniform(-commet_v*10, commet_v*10)
-        p.M = random.uniform(Ms/50, Ms/5)
-        planets = np.append(planets, p)
+    # for i in range(2):
+    #     p = copy.deepcopy(ps)
+    #     p.pos[X] = random.uniform(-1.0167*AU*2, 1.0167*AU*2)
+    #     p.pos[Y] = random.uniform(-1.0167*AU*2, 1.0167*AU*2)
+    #     p.vel[X] = random.uniform(-commet_v*10, commet_v*10)
+    #     p.vel[Y] = random.uniform(-commet_v*10, commet_v*10)
+    #     p.M = Ms #random.uniform(Ms/50, Ms/5)
+    #     planets = np.append(planets, p)
 
     v_pos = []
     v_vel = []
@@ -252,7 +256,7 @@ def main():
             i += 1
             
         if distanze_min.item() < 2*raggi_max.values.item():
-            print('test for collision')
+            # print('test for collision')
             collision = False
             i = 0
             for p1 in planets:
@@ -278,7 +282,7 @@ def main():
                 for p in planets:
                     v_M.append(p.M)
                 masse = torch.tensor(v_M, dtype=torch.float32).to(device)
-                print('collision')
+                # print('collision')
     
         # if t > days(28) and t < days(80):
         #     worldSize.x *= 1.01
@@ -294,14 +298,14 @@ def main():
         # if mean[Y] > worldSize.y:
         # 	worldSize.y = mean[Y]
 
-        if maxx > worldSize.x:
-        	worldSize.x = maxx
-        if minx < -worldSize.x and minx < 0.0:
-        	worldSize.x = -minx
-        if maxy > worldSize.y:
-        	worldSize.y = maxy
-        if miny < -worldSize.y and miny < 0.0:
-        	worldSize.y = -miny	
+        if 2*maxx > worldSize.x:
+        	worldSize.x = 2*maxx
+        if 2*minx < -worldSize.x and minx < 0.0:
+        	worldSize.x = -2*minx
+        if 2*maxy > worldSize.y:
+        	worldSize.y = 2*maxy
+        if 2*miny < -worldSize.y and miny < 0.0:
+        	worldSize.y = -2*miny	
 
         t += dt
 
@@ -317,6 +321,10 @@ def main():
         for e in pg.event.get():
             if e.type == pg.QUIT or (e.type == pg.KEYUP and e.key == pg.K_ESCAPE):
                 done = 1
+            if (e.type == pg.KEYUP and e.key == pg.K_w):
+                zoom *= 0.9
+            if (e.type == pg.KEYUP and e.key == pg.K_s):
+                zoom /= 0.9
                 break
         
         clock.tick(clock_tick)
