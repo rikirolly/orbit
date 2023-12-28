@@ -32,7 +32,7 @@ m_ap_v      = 21970                     # mars velocity at aphelion
 commet_v    = 2000
 moon_v		= e_ap_v+1020.0
 
-centro_massa = np.array([0.0,0.0,0.0])
+mass_center = np.array([0.0,0.0,0.0])
 maxM = 0.0
 minM = sys.float_info.max
 
@@ -95,11 +95,11 @@ screenSize = coordinates(800, 800)
 WINSIZE = [screenSize.x, screenSize.y]
 
 def w2p(x, y):
-    global centro_massa
+    global mass_center
     correction = 1
 
-    # centerx = centro_massa[X]
-    # centery = centro_massa[Y]
+    # centerx = mass_center[X]
+    # centery = mass_center[Y]
     centerx = pe.pos[X]
     centery = pe.pos[Y]
 
@@ -115,13 +115,13 @@ def days(g):
 
 
 def draw_planet(surface: pg.surface.Surface, p: planet):
-    global centro_massa, maxM, minM
+    global mass_center, maxM, minM
     factor = int((p.M-minM)/(maxM-minM)*255)
     red = factor
     green = 255-factor
     blue = factor
     color = (red, green, blue)
-    pg.draw.rect(surface, WHITE, pg.Rect(w2p(centro_massa[X], centro_massa[Y]), (5, 5)))
+    pg.draw.rect(surface, WHITE, pg.Rect(w2p(mass_center[X], mass_center[Y]), (5, 5)))
     pg.draw.circle(surface, p.color, w2p(p.pos[X], p.pos[Y]), math.log(p.r)/5)
     points = []
     for pos in p.queue:
@@ -131,7 +131,7 @@ def draw_planet(surface: pg.surface.Surface, p: planet):
 
 
 def main():
-    global centro_massa, maxM, minM, planets, pe
+    global mass_center, maxM, minM, planets, pe
 
     pe = planet(pos=np.array([1.0167*AU, 0.0, 0.0]), vel=np.array([0.0, e_ap_v, 0.0]), M=Me, color=GREEN)
     pmoon = planet(pos=np.array([1.0167*AU-3.844e8, 0.0, 0.0]), vel=np.array([0.0, moon_v, 0.0]), M=Mmoon, color=WHITE)
@@ -264,7 +264,7 @@ def main():
             mean += np.abs(pl.pos)
 
         mean /= len(planets) # to be used for view auto-centering	
-        centro_massa = num/den
+        mass_center = num/den
 
         # if t > days(28) and t < days(80):
         #     worldSize.x *= 1.01
