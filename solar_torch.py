@@ -8,43 +8,6 @@ import sys
 import pygame as pg
 import numpy as np
 import torch
-from skyfield.api import load
-from astroquery.jplhorizons import Horizons
-from astropy import units as u
-import re
-
-object_id = "399" # Mercury
-obj_id = Horizons(id=object_id, location="0") # Location 0 is the solar system barycenter
-
-response = obj_id.ephemerides_async()
-
-def extract_data(text):
-    # Regex migliorata per gestire formati diversi di chiavi e valori
-    pattern = r"([A-Za-z\s.]+)(?:\[(?:[^\]]+)\])?\s*=\s*([^\n]+)"
-    matches = re.findall(pattern, text)
-    
-    # Creazione del dizionario migliorato
-    data_dict = {}
-    for key, value in matches:
-        # Pulizia e normalizzazione della chiave
-        key = key.strip().replace(' ', '_').replace('.', '').lower()
-        # Pulizia del valore e gestione di valori multipli
-        value = value.strip().split(' ')
-        # Se il valore è unico, lo inserisce direttamente, altrimenti crea una lista
-        data_dict[key] = value[0] if len(value) == 1 else value
-
-    return data_dict
-
-print(extract_data(response.text))
-
-
-planets = load('de421.bsp')
-earth, mars = planets['earth'], planets['mars']
-sun = planets['sun']
-ts = load.timescale()
-t = ts.now()
-position = sun.at(t).observe(earth)
-ra, dec, distance = position.radec()
 
 dtype = torch.float
 device = torch.device("cuda")
@@ -151,6 +114,7 @@ def update_position(position: torch.Tensor, mass: torch.Tensor, velocity: torch.
 worldSize = coordinates(10*4.065e8, 10*4.065e8)
 screenSize = coordinates(800, 800)
 zoom = 1.0
+queue_len = 1
 
 # constants
 WINSIZE = [screenSize.x, screenSize.y]
@@ -180,7 +144,7 @@ def draw_planet(surface: pg.surface.Surface, p: planet):
     global mass_center
     if p.M != 0:
         pg.draw.rect(surface, WHITE, pg.Rect(w2p(mass_center[X], mass_center[Y]), (5, 5)))
-        pg.draw.circle(surface, p.color, w2p(p.pos[X], p.pos[Y]), math.log(p.r)/5)
+        pg.draw.circle(surface, p.color, w2p(p.pos[X], p.pos[Y]), math.pow(math.log(p.r),4)/30000)
         points = []
         for pos in p.queue:
             points.append(w2p(pos[X], pos[Y]))
@@ -189,7 +153,7 @@ def draw_planet(surface: pg.surface.Surface, p: planet):
 
 
 def main():
-    global mass_center, planets, pe, zoom
+    global mass_center, planets, pe, zoom, queue_len
 
     pe = planet(pos=np.array([1.0167*AU, 0.0, 0.0]), vel=np.array([0.0, e_ap_v, 0.0]), M=Me, color=GREEN)
     pmoon = planet(pos=np.array([1.0167*AU-3.844e8, 0.0, 0.0]), vel=np.array([0.0, moon_v, 0.0]), M=Mmoon, color=WHITE)
@@ -219,15 +183,16 @@ def main():
 
     ps.M *= 10
     planets = [ps, ps2, ps3, ps4, ps5]
+    # planets = []
 
-    for i in range(1000):
+    for i in range(5000):
         speed = commet_v*20
         p = copy.deepcopy(ps)
         p.pos[X] = random.uniform(-1.0167*AU*2, 1.0167*AU*2)
         p.pos[Y] = random.uniform(-1.0167*AU*2, 1.0167*AU*2)
-        p.vel[X] = random.uniform(-speed, speed)
-        p.vel[Y] = random.uniform(-speed, speed)
-        p.M = random.uniform(Me/10, Me)
+        p.vel[X] = 0#random.uniform(-speed, speed)
+        p.vel[Y] = 0#random.uniform(-speed, speed)
+        p.M = random.uniform(Mmoon/10, Me*10)
         p.color=GREEN
         planets = np.append(planets, p)
 
@@ -282,7 +247,7 @@ def main():
             pl.pos[Y] = position[i][Y]
             pl.M = t_mass[i].tolist()
             pl.queue.append(copy.copy(pl.pos))
-            if len(pl.queue) > 1000:
+            while len(pl.queue) > queue_len:
                 pl.queue.pop(0)
             i += 1
 
@@ -311,10 +276,16 @@ def main():
         for e in pg.event.get():
             if e.type == pg.QUIT or (e.type == pg.KEYUP and e.key == pg.K_ESCAPE):
                 done = 1
-            if (e.type == pg.KEYUP and e.key == pg.K_w):
+            if (e.type == pg.KEYUP and e.key == pg.K_PLUS):
                 zoom *= 0.9
-            if (e.type == pg.KEYUP and e.key == pg.K_s):
+            if (e.type == pg.KEYUP and e.key == pg.K_MINUS):
                 zoom /= 0.9
+            if (e.type == pg.KEYUP and e.key == pg.K_UP):
+                queue_len += 1
+                break
+            if (e.type == pg.KEYUP and e.key == pg.K_DOWN):
+                if queue_len>0:
+                    queue_len -= 1
                 break
         
         clock.tick(clock_tick)
